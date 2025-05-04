@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>PickMe – Заказы</title>
+    <link rel="icon" type="image/png" href="static/images/favicon.png}">
+    <link rel="stylesheet" href="static/css/styles.css">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f8fdf8;
+        }
+
+        header, footer {
+            background-color: #c2dc52;
+            color: #333;
+            text-align: center;
+            padding: 15px 0;
+        }
+
+        header img {
+            height: 50px;
+        }
+
+        main {
+            flex: 1;
+            padding-bottom: 30px;
+        }
+
+        table {
+            width: 90%;
+            margin: 30px auto;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #e9f3c4;
+        }
+
+        input[type="text"] {
+            width: 80px;
+            padding: 5px;
+            text-align: center;
+        }
+
+        tr.done {
+    background-color: #e0e0e0;
+}
+
+        tr:nth-child(even):not(.done) {
+            background-color: #f7fef7;
+        }
+
+        button {
+            padding: 5px 10px;
+            margin: 2px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-done {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+        }
+        tr.accepted {
+    background-color: #d0f0ff; /* светло-синий */
+}
+
+tr.accepted.done {
+    background-color: #c5e0e5; /* смешанный стиль, если и done, и accepted */
+}
+    </style>
+</head>
+<body>
+<header>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px;">
+        <div style="display: flex; align-items: center;">
+            <img src="static/images/logo.png" alt="PickMe Logo" style="height: 50px; margin-right: 15px;">
+            <h1 style="margin: 0;">PickMe – Заказы</h1>
+        </div>
+        <nav>
+            <a href="/" style="margin-right: 20px; text-decoration: none; color: #333;">Главная</a>
+            <a href="/users/" style="text-decoration: none; color: #333;">Пользователи</a>
+        </nav>
+    </div>
+</header>
+<main>
+    <table>
+        <thead>
+            <tr>
+                <th>Пользователь</th>
+                <th>Дата</th>
+                <th>Откуда</th>
+                <th>Куда</th>
+                <th>Цена</th>
+                <th>Согласен</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for user_id, user_data in content.items %}
+            {% if user_data.orders %}
+                {% for order_id, order in user_data.orders.items %}
+<tr id="row-{{ user_id }}-{{ forloop.counter0 }}"
+    class="{% if order.isDone %}done {% endif %}{% if order.isAccepted %} accepted{% endif %}">
+                        <td>{{ user_data.name|default:"Без имени" }}</td>
+                        <td>{{ order.date }}</td>
+                        <td>{{ order.pickUpAdd }}</td>
+                        <td>{{ order.dropOffAdd }}</td>
+                        <td>
+                            <input type="text"
+                                   value="{{ order.price }}"
+                                   onchange="autoUpdatePrice('{{ user_id }}', '{{ order_id }}', this.value)">
+                        </td>
+                        <td>
+    {% if order.isAccepted %}
+        ✅
+    {% else %}
+        ❌
+    {% endif %}
+</td>
+                        <td>
+                            {% if not order.isDone %}
+                            <button class="btn-done" onclick="markDone('{{ user_id }}', '{{ order_id }}', this)">Готово</button>
+                            {% endif %}
+                            <button class="btn-delete" onclick="deleteOrder('{{ user_id }}', '{{ order_id }}', this)">Удалить</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+</main>
+
+<footer>
+    <p>© {{ now|date:"Y" }} PickMe – Все права защищены</p>
+</footer>
+
+<audio id="order-sound" src="static/sounds/sound.mp3%}" preload="auto"></audio>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function autoUpdatePrice(userId, orderId, newPrice) {
+    fetch('/update_price/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({ user_id: userId, order_id: orderId, price: newPrice })
+    });
+}
+
+function markDone(userId, orderId, btn) {
+    fetch('/mark_done/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({ user_id: userId, order_id: orderId })
+    }).then(() => {
+        const row = btn.closest('tr');
+        row.classList.add('done');
+        btn.remove();  // убрать кнопку "Готово"
+    });
+}
+
+function deleteOrder(userId, orderId, btn) {
+    if (!confirm("Удалить этот заказ?")) return;
+    fetch('/delete_order/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({ user_id: userId, order_id: orderId })
+    }).then(() => {
+        const row = btn.closest('tr');
+        row.remove();
+    });
+}
+
+// Звук при новых заказах
+let lastOrderCount = document.querySelectorAll('tbody tr').length;
+setInterval(() => {
+    fetch('/check_new_orders/')
+        .then(res => res.json())
+        .then(data => {
+            if (data.order_count > lastOrderCount) {
+                document.getElementById('order-sound').play();
+            }
+            lastOrderCount = data.order_count;
+        });
+}, 60000);
+</script>
+
+</body>
+</html>
