@@ -1,0 +1,33 @@
+{% for user_id, user_data in content.items %}
+    {% if user_data.orders %}
+        {% for order_id, order in user_data.orders.items %}
+            <tr class="{% if order.isDone %}done {% endif %}{% if order.isAccepted %}accepted{% endif %}">
+                <td>{{ user_data.name|default:"Без имени" }}</td>
+                <td>{{ order.date }}</td>
+                <td>{{ order.pickUpAdd }}</td>
+                <td>{{ order.dropOffAdd }}</td>
+                <td>
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="{{ order.price }}"
+                           data-order-id="{{ order_id }}"
+                           data-user-id="{{ user_id }}"
+                           onchange="autoUpdatePrice('{{ user_id }}', '{{ order_id }}', this.value)">
+                </td>
+                <td>
+                    {% if order.isAccepted %}
+                        ✅
+                    {% else %}
+                        ❌
+                    {% endif %}
+                </td>
+                <td>
+                    {% if not order.isDone %}
+                        <button class="btn btn-sm btn-success" onclick="markDone('{{ user_id }}', '{{ order_id }}', this)">Готово</button>
+                    {% endif %}
+                    <button class="btn btn-sm btn-danger" onclick="deleteOrder('{{ user_id }}', '{{ order_id }}', this)">Удалить</button>
+                </td>
+            </tr>
+        {% endfor %}
+    {% endif %}
+{% endfor %}

@@ -1,18 +1,74 @@
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-}
-
 body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
     font-family: Arial, sans-serif;
     background-color: #f8fdf8;
 }
-
-main {
-    flex: 1;
-    padding-bottom: 30px;
+header, footer {
+    background-color: #4544cc;
+    color: #ffffff;
+    padding: 15px 0;
+}
+header {
+    text-align: right;
+}
+footer {
+    font-size: 14px;
+}
+table {
+    width: 90%;
+    margin: 30px auto;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+th, td {
+    border: 1px solid #dee2e6;
+    padding: 12px;
+    text-align: center;
+}
+th {
+    background-color: #fec80e;
+    color: #000;
+}
+input[type="text"] {
+    width: 80px;
+    padding: 5px;
+    text-align: center;
+}
+tr.done {
+    background-color: #e0e0e0;
+}
+tr:nth-child(even):not(.done) {
+    background-color: #f7fef7;
+}
+button {
+    padding: 5px 10px;
+    margin: 2px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+button:hover {
+    opacity: 0.9;
+}
+.btn-done {
+    background-color: #4caf50;
+    color: white;
+}
+.btn-delete {
+    background-color: #f44336;
+    color: white;
+}
+tr.accepted {
+    background-color: #d0f0ff;
+}
+tr.accepted.done {
+    background-color: #c5e0e5;
+}
+.notify-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: #fec80e;
+    border-radius: 50%;
+    margin-left: 6px;
 }

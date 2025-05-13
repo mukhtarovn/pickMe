@@ -1,41 +1,29 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PickMe – Заказы</title>
-    <link rel="icon" type="image/png" href="static/images/favicon.png}">
-    <link rel="stylesheet" href="static/css/styles.css">
+    <title>EzzCab – Orders</title>
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
+        html, body { height: 100%; margin: 0; padding: 0; }
         body {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
             font-family: Arial, sans-serif;
-            background-color: #f8fdf8;
         }
-
-        header, footer {
-            background-color: #c2dc52;
+        footer {
+            background-color: #4544cc;
             color: #333;
             text-align: center;
             padding: 15px 0;
         }
-
-        header img {
-            height: 50px;
-        }
-
-        main {
-            flex: 1;
-            padding-bottom: 30px;
-        }
-
+        img { height: 50px; }
+        main { flex: 1; padding-bottom: 30px; }
+}
         table {
             width: 90%;
             margin: 30px auto;
@@ -43,31 +31,19 @@
             background: white;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-
         th, td {
             border: 1px solid #dee2e6;
             padding: 12px;
             text-align: center;
         }
-
-        th {
-            background-color: #e9f3c4;
-        }
-
+        th { background-color: #fec80e; }
         input[type="text"] {
             width: 80px;
             padding: 5px;
             text-align: center;
         }
-
-        tr.done {
-    background-color: #e0e0e0;
-}
-
-        tr:nth-child(even):not(.done) {
-            background-color: #f7fef7;
-        }
-
+        tr.done { background-color: #e0e0e0; }
+        tr:nth-child(even):not(.done) { background-color: #f7fef7; }
         button {
             padding: 5px 10px;
             margin: 2px;
@@ -75,96 +51,39 @@
             cursor: pointer;
             border-radius: 4px;
         }
-
-        button:hover {
-            opacity: 0.9;
-        }
-
-        .btn-done {
-            background-color: #4caf50;
-            color: white;
-        }
-
-        .btn-delete {
-            background-color: #f44336;
-            color: white;
-        }
-        tr.accepted {
-    background-color: #d0f0ff; /* светло-синий */
-}
-
-tr.accepted.done {
-    background-color: #c5e0e5; /* смешанный стиль, если и done, и accepted */
-}
+        button:hover { opacity: 0.9; }
+        .btn-done { background-color: #4caf50; color: white; }
+        .btn-delete { background-color: #f44336; color: white; }
+        tr.accepted { background-color: #d0f0ff; }
+        tr.accepted.done { background-color: #c5e0e5; }
     </style>
 </head>
-<body>
-<header>
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px;">
-        <div style="display: flex; align-items: center;">
-            <img src="static/images/logo.png" alt="PickMe Logo" style="height: 50px; margin-right: 15px;">
-            <h1 style="margin: 0;">PickMe – Заказы</h1>
-        </div>
-        <nav>
-            <a href="/" style="margin-right: 20px; text-decoration: none; color: #333;">Главная</a>
-            <a href="/users/" style="text-decoration: none; color: #333;">Пользователи</a>
-        </nav>
-    </div>
-</header>
+<body onclick="enableSound()">
+    {% include 'includes/header.html' %}
 <main>
     <table>
-        <thead>
-            <tr>
-                <th>Пользователь</th>
-                <th>Дата</th>
-                <th>Откуда</th>
-                <th>Куда</th>
-                <th>Цена</th>
-                <th>Согласен</th>
-                <th>Действия</th>
-            </tr>
+        <thead style="color: #4544cc;">
+        <tr>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Price</th>
+            <th>Approval</th>
+            <th>Action</th>
+        </tr>
         </thead>
-        <tbody>
-        {% for user_id, user_data in content.items %}
-            {% if user_data.orders %}
-                {% for order_id, order in user_data.orders.items %}
-<tr id="row-{{ user_id }}-{{ forloop.counter0 }}"
-    class="{% if order.isDone %}done {% endif %}{% if order.isAccepted %} accepted{% endif %}">
-                        <td>{{ user_data.name|default:"Без имени" }}</td>
-                        <td>{{ order.date }}</td>
-                        <td>{{ order.pickUpAdd }}</td>
-                        <td>{{ order.dropOffAdd }}</td>
-                        <td>
-                            <input type="text"
-                                   value="{{ order.price }}"
-                                   onchange="autoUpdatePrice('{{ user_id }}', '{{ order_id }}', this.value)">
-                        </td>
-                        <td>
-    {% if order.isAccepted %}
-        ✅
-    {% else %}
-        ❌
-    {% endif %}
-</td>
-                        <td>
-                            {% if not order.isDone %}
-                            <button class="btn-done" onclick="markDone('{{ user_id }}', '{{ order_id }}', this)">Готово</button>
-                            {% endif %}
-                            <button class="btn-delete" onclick="deleteOrder('{{ user_id }}', '{{ order_id }}', this)">Удалить</button>
-                        </td>
-                    </tr>
-                {% endfor %}
-            {% endif %}
-        {% endfor %}
+        <tbody id="orders-table-body">
+            {% include "mainapp/table_order.html" %}
         </tbody>
     </table>
 </main>
 
 <footer>
-    <p>© {{ now|date:"Y" }} PickMe – Все права защищены</p>
+    <p style="color:#feecae">© {{ now|date:"Y" }} EzzCab – All rights reserved</p>
 </footer>
 
-<audio id="order-sound" src="static/sounds/sound.mp3%}" preload="auto"></audio>
+<audio id="order-sound" src="{% static 'sounds/sound.mp3' %}" preload="auto"></audio>
 
 <script>
 function getCookie(name) {
@@ -181,6 +100,13 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+function enableSound() {
+    const audio = document.getElementById('order-sound');
+    audio.play().catch(() => {});
+    document.body.removeEventListener('click', enableSound);
+}
+document.body.addEventListener('click', enableSound);
 
 function autoUpdatePrice(userId, orderId, newPrice) {
     fetch('/update_price/', {
@@ -204,7 +130,7 @@ function markDone(userId, orderId, btn) {
     }).then(() => {
         const row = btn.closest('tr');
         row.classList.add('done');
-        btn.remove();  // убрать кнопку "Готово"
+        btn.remove();
     });
 }
 
@@ -223,19 +149,38 @@ function deleteOrder(userId, orderId, btn) {
     });
 }
 
-// Звук при новых заказах
 let lastOrderCount = document.querySelectorAll('tbody tr').length;
-setInterval(() => {
-    fetch('/check_new_orders/')
-        .then(res => res.json())
-        .then(data => {
-            if (data.order_count > lastOrderCount) {
-                document.getElementById('order-sound').play();
-            }
-            lastOrderCount = data.order_count;
-        });
-}, 60000);
-</script>
 
+async function checkOrdersAndUpdate() {
+    try {
+        const response = await fetch('/check-orders/');
+        const data = await response.json();
+        const currentCount = data.order_count;
+
+        if (currentCount > lastOrderCount) {
+            document.getElementById('order-sound').play();
+        }
+
+        lastOrderCount = currentCount;
+    } catch (error) {
+        console.error('Ошибка при проверке заказов:', error);
+    }
+}
+
+function refreshOrders() {
+    fetch('/get-orders-html/')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('orders-table-body').innerHTML = data.html;
+            lastOrderCount = document.querySelectorAll('#orders-table-body tr').length;
+        })
+        .catch(error => console.error('Ошибка при обновлении заказов:', error));
+}
+
+setInterval(() => {
+    refreshOrders();
+    checkOrdersAndUpdate();
+}, 5000);
+</script>
 </body>
 </html>

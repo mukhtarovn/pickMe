@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Firebase Notification Test</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <h2>Firebase Chat Notification Test</h2>
+  <p>Open browser console (F12). Then send a message into Firebase.</p>
+
+  <script>
+    const firebaseConfig = {
+      databaseURL: "https://pickme-66a2b-default-rtdb.firebaseio.com/"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const chatTimestamps = {};
+
+    // Проверка разрешения
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission().then(permission => {
+        console.log("Notification permission:", permission);
+      });
+    }
+
+    // Слушаем все чаты пользователей
+    const usersRef = db.ref("users");
+    usersRef.once("value").then(snapshot => {
+      const users = snapshot.val();
+      if (!users) return;
+
+      Object.keys(users).forEach(uid => {
+        const chatRef = db.ref(`users/${uid}/chats`);
+        chatRef.limitToLast(1).on("child_added", snap => {
+          const msg = snap.val();
+          console.log("📥 New message received:", msg);
+
+          if (msg.sender === "dispatcher") return;
+          const time = msg.timestamp || 0;
+
+          if (!chatTimestamps[uid] || time > chatTimestamps[uid]) {
+            chatTimestamps[uid] = time;
+
+            if (Notification.permission === "granted") {
+              const notification = new Notification("New message!", {
+                body: `From user ${uid}: ${msg.text || "[no text]"}`,
+                icon: "https://via.placeholder.com/64x64.png?text=EzzCab"
+              });
+
+              notification.onclick = () => {
+                window.open(`/dispatcher_chat/?user_uid=${uid}`, "_blank");
+              };
+            }
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
